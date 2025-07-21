@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken', # For token-based authentication
     'corsheaders',            # For handling Cross-Origin Resource Sharing
     'auth_app',               # Our custom authentication app
+    'admin_app',
     # 'posts_app',            # Will be added in the next step
 ]
 
