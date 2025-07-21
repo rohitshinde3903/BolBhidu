@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@e4!x-v8%*k_2@#8-^88m^s0h7*y_e!w59!5r#9^d8(k5=d@6'
+SECRET_KEY = 'django-insecure-@e4!x-v8%*k_2@#8-^88m^s0h7*y_e!w59!5r#9^d8(k5=d@6' # Replace with a strong, unique secret key in production
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -21,15 +21,17 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    'django.contrib.admin', # Keeping admin for initial superuser creation, but we'll build custom admin later
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework', # Django REST Framework for API
-    'corsheaders',    # For handling Cross-Origin Resource Sharing
-    'posts',   # Our custom Django app
+    'rest_framework',         # Django REST Framework
+    'rest_framework.authtoken', # For token-based authentication
+    'corsheaders',            # For handling Cross-Origin Resource Sharing
+    'auth_app',               # Our custom authentication app
+    # 'posts_app',            # Will be added in the next step
 ]
 
 MIDDLEWARE = [
@@ -117,7 +119,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOW_ALL_ORIGINS = True
 # Or specify allowed origins:
 # CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000", # Replace with your frontend URL
+#     "http://localhost:3000", # Replace with your Next.js frontend URL
 # ]
 # CORS_ALLOW_METHODS = [
 #     'DELETE',
@@ -137,3 +139,15 @@ CORS_ALLOW_ALL_ORIGINS = True
 #     'x-csrftoken',
 #     'x-requested-with',
 # ]
+
+# REST Framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication', # Enable token authentication
+        'rest_framework.authentication.SessionAuthentication', # For browsable API
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny', # Default to allow any, restrict later as needed
+    ]
+}
+
