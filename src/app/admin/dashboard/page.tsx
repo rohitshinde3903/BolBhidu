@@ -10,7 +10,8 @@ import { useRouter } from 'next/navigation'; // For navigation in Next.js App Ro
 interface Post {
   id: number;
   headline: string;
-  content?: string; // Optional field
+  hero_image?: string; // New: URL for the hero image
+  content?: string; // Optional field, will contain HTML
   tags?: string; // Optional field
   author: number; // User ID of the author
   author_username: string; // Username of the author (read-only from backend)
@@ -22,8 +23,9 @@ const AdminDashboardPage: React.FC = () => {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [newPostHeadline, setNewPostHeadline] = useState<string>('');
-  const [newPostContent, setNewPostContent] = useState<string>('');
+  const [newPostContent, setNewPostContent] = useState<string>(''); // This will hold HTML content
   const [newPostTags, setNewPostTags] = useState<string>('');
+  const [newPostHeroImage, setNewPostHeroImage] = useState<File | null>(null); // State for the image file
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,19 +102,24 @@ const AdminDashboardPage: React.FC = () => {
 
     setIsLoading(true);
 
+    // Use FormData for file uploads
+    const formData = new FormData();
+    formData.append('headline', newPostHeadline);
+    formData.append('content', newPostContent); // Content as HTML string
+    formData.append('tags', newPostTags);
+    if (newPostHeroImage) {
+      formData.append('hero_image', newPostHeroImage);
+    }
+
     try {
       const response = await fetch(API_POSTS_URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          // Do NOT set 'Content-Type': 'application/json' when sending FormData
+          // The browser will set the correct 'multipart/form-data' header automatically
           'Authorization': `Token ${token}`, // Include the authentication token
         },
-        body: JSON.stringify({
-          headline: newPostHeadline,
-          content: newPostContent,
-          tags: newPostTags,
-          // author will be automatically set by the backend based on the authenticated user
-        }),
+        body: formData, // Send FormData directly
       });
 
       if (!response.ok) {
@@ -124,7 +131,9 @@ const AdminDashboardPage: React.FC = () => {
             throw new Error('Authentication expired. Please log in again.');
         }
         const errorData = await response.json();
-        throw new Error(errorData.detail || `Failed to add post: ${response.status}`);
+        // Attempt to parse specific field errors if available
+        const errorMessage = errorData.headline || errorData.content || errorData.hero_image || errorData.tags || errorData.detail || `Failed to add post: ${response.status}`;
+        throw new Error(errorMessage);
       }
 
       const newPost: Post = await response.json();
@@ -132,6 +141,7 @@ const AdminDashboardPage: React.FC = () => {
       setNewPostHeadline('');
       setNewPostContent('');
       setNewPostTags('');
+      setNewPostHeroImage(null); // Clear image input
       fetchPosts(token); // Refresh the list of posts
     } catch (err: any) {
       console.error('Failed to add post:', err);
@@ -189,17 +199,33 @@ const AdminDashboardPage: React.FC = () => {
               />
             </div>
             <div>
+              <label htmlFor="heroImage" className="block text-gray-700 text-sm font-semibold mb-2">
+                Hero Image (Optional)
+              </label>
+              <input
+                type="file"
+                id="heroImage"
+                accept="image/*"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                onChange={(e) => setNewPostHeroImage(e.target.files ? e.target.files[0] : null)}
+              />
+            </div>
+            <div>
               <label htmlFor="content" className="block text-gray-700 text-sm font-semibold mb-2">
-                Content (Optional)
+                Content (Enter HTML for rich text, highlighting, colors)
               </label>
               <textarea
                 id="content"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 resize-y min-h-[100px]"
-                placeholder="Enter post content"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 resize-y min-h-[150px]"
+                placeholder="Enter post content (HTML allowed, e.g., <p>This is <strong>bold</strong>. <span style='color: red;'>Red text</span>.</p>)"
                 value={newPostContent}
                 onChange={(e) => setNewPostContent(e.target.value)}
-                rows={5}
+                rows={8}
               ></textarea>
+              <p className="text-xs text-gray-500 mt-1">
+                You can use HTML tags (e.g., `&lt;p&gt;`, `&lt;strong&gt;`, `&lt;span style="..."&gt;`, `&lt;img src="..."&gt;`) for rich formatting.
+                <span className="font-bold text-red-600"> Warning: Ensure content is safe HTML to prevent XSS attacks in a real application.</span>
+              </p>
             </div>
             <div>
               <label htmlFor="tags" className="block text-gray-700 text-sm font-semibold mb-2">
@@ -254,7 +280,11 @@ const AdminDashboardPage: React.FC = () => {
             {posts.map((post) => (
               <div key={post.id} className="bg-blue-50 p-4 rounded-lg shadow-sm border border-blue-100">
                 <h3 className="text-xl font-bold text-gray-800 mb-1">{post.headline}</h3>
-                {post.content && <p className="text-gray-700 text-base mb-2">{post.content.substring(0, 150)}...</p>}
+                {post.hero_image && (
+                    <img src={post.hero_image} alt={post.headline} className="w-full h-48 object-cover rounded-md mb-2" />
+                )}
+                {/* Display a snippet of the content, without rendering full HTML here */}
+                {post.content && <p className="text-gray-700 text-base mb-2" dangerouslySetInnerHTML={{ __html: post.content.substring(0, 150) + '...' }}></p>}
                 {post.tags && (
                   <p className="text-gray-600 text-sm mb-1">
                     Tags: <span className="font-medium">{post.tags}</span>
