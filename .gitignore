@@ -1,1 +1,7 @@
+/admin_app/__pycache__/
+/auth_app/__pycache__/
+/posts/__pycache__/
+/posts/migrations/
+/admin_app/migrations/
+/auth_app/migrations/
 /venv

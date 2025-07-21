@@ -31,8 +31,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken', # For token-based authentication
     'corsheaders',            # For handling Cross-Origin Resource Sharing
     'auth_app',               # Our custom authentication app
-    'admin_app',
-    # 'posts_app',            # Will be added in the next step
+    'admin_app',              # Our new admin app for posts
 ]
 
 MIDDLEWARE = [
@@ -151,4 +150,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny', # Default to allow any, restrict later as needed
     ]
 }
+
+# Media files (user uploaded content)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media') # Directory where uploaded files will be stored
 

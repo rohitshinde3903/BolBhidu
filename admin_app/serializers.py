@@ -11,9 +11,12 @@ class PostSerializer(serializers.ModelSerializer):
     """
     # Display author's username instead of just their ID
     author_username = serializers.ReadOnlyField(source='author.username')
+    # Use a URL field for the hero_image to get the full URL in API responses
+    hero_image = serializers.ImageField(required=False, allow_null=True)
+
 
     class Meta:
         model = Post
-        fields = ['id', 'headline', 'content', 'tags', 'author', 'author_username', 'published_date', 'updated_date']
+        fields = ['id', 'headline', 'hero_image', 'content', 'tags', 'author', 'author_username', 'published_date', 'updated_date']
         read_only_fields = ['id', 'author_username', 'published_date', 'updated_date'] # These fields are read-only for incoming data
 
